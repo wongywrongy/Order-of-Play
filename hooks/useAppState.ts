@@ -57,10 +57,35 @@ export function useAppState() {
   const [warmupTimeSeconds, setWarmupTimeSeconds] = useState<number>(300); // Default 5 minutes (300 seconds)
   const [warmupFlashSeconds, setWarmupFlashSeconds] = useState<number>(10); // Default 10 seconds
   const [matchIntervalMinutes, setMatchIntervalMinutes] = useState<number>(30); // Default 30 minutes
+  const [orderOfPlayCardHeight, setOrderOfPlayCardHeight] = useState<number>(120); // Default 120px
 
-  const addPlayer = useCallback((name: string) => {
-    const newPlayer = createPlayer(name);
+  const addPlayer = useCallback((
+    name: string,
+    gender?: 'M' | 'F',
+    events?: string[],
+    notes?: string
+  ) => {
+    const newPlayer = createPlayer(name, gender, events as any, notes);
     setPlayers((prev) => [...prev, newPlayer]);
+  }, []);
+
+  const updatePlayer = useCallback((
+    id: string,
+    updates: { name?: string; gender?: 'M' | 'F'; events?: string[]; notes?: string }
+  ) => {
+    setPlayers((prev) =>
+      prev.map((player) =>
+        player.id === id
+          ? {
+              ...player,
+              name: updates.name !== undefined ? updates.name : player.name,
+              gender: updates.gender !== undefined ? updates.gender : player.gender,
+              events: updates.events !== undefined ? (updates.events as any) : player.events,
+              notes: updates.notes !== undefined ? updates.notes : player.notes,
+            }
+          : player
+      )
+    );
   }, []);
 
   const removePlayer = useCallback((id: string) => {
@@ -542,7 +567,10 @@ export function useAppState() {
       setWarmupFlashSeconds,
       matchIntervalMinutes,
       setMatchIntervalMinutes,
+      orderOfPlayCardHeight,
+      setOrderOfPlayCardHeight,
       addPlayer,
+      updatePlayer,
       updateMatchDetails,
       removePlayer,
       addMatch,
@@ -555,7 +583,6 @@ export function useAppState() {
       toggleTimerPause,
       updateMatchScore,
       toggleCheckIn,
-      updateMatchDetails,
       recentlyCompletedMatches,
       setNumCourts,
       moveCourtToGridPosition,
@@ -577,7 +604,10 @@ export function useAppState() {
       setWarmupFlashSeconds,
       matchIntervalMinutes,
       setMatchIntervalMinutes,
+      orderOfPlayCardHeight,
+      setOrderOfPlayCardHeight,
       addPlayer,
+      updatePlayer,
       removePlayer,
       addMatch,
       removeMatch,

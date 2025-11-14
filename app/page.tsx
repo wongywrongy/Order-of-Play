@@ -8,14 +8,25 @@ import { MatchQueueHeader } from '@/components/MatchQueue/MatchQueueHeader';
 import { EditModeToggle } from '@/components/CourtGrid/EditModeToggle';
 import { CompletedMatchesList } from '@/components/CompletedMatchesList/CompletedMatchesList';
 import { ConfigModal } from '@/components/Config/ConfigModal';
+import { PlayerListModal } from '@/components/PlayerList/PlayerListModal';
+import { MatchCreatorModal } from '@/components/MatchCreator/MatchCreatorModal';
+import { ResizableDivider } from '@/components/utils/ResizableDivider';
 import { useApp } from '@/context/AppContext';
 import { DragEndEvent } from '@dnd-kit/core';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function Home() {
   const { assignMatchToCourt } = useApp();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isPlayersOpen, setIsPlayersOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  
+  // Resizable panel sizes
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [courtLayoutHeight, setCourtLayoutHeight] = useState(0); // Will be calculated as percentage
+  const mainContentRef = useRef<HTMLDivElement>(null);
+  const leftContentRef = useRef<HTMLDivElement>(null);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -26,6 +37,30 @@ export default function Home() {
       const matchId = active.id as string;
       assignMatchToCourt(matchId, courtId);
     }
+  };
+
+  // Calculate initial court layout height as percentage (5/8 = 62.5%)
+  useEffect(() => {
+    const updateInitialHeight = () => {
+      if (leftContentRef.current) {
+        const totalHeight = leftContentRef.current.clientHeight;
+        if (courtLayoutHeight === 0) {
+          setCourtLayoutHeight((5 / 8) * totalHeight);
+        }
+      }
+    };
+    
+    updateInitialHeight();
+    window.addEventListener('resize', updateInitialHeight);
+    return () => window.removeEventListener('resize', updateInitialHeight);
+  }, [courtLayoutHeight]);
+
+  const handleSidebarResize = (newWidth: number) => {
+    setSidebarWidth(newWidth);
+  };
+
+  const handleVerticalResize = (newHeight: number) => {
+    setCourtLayoutHeight(newHeight);
   };
 
   return (
@@ -55,6 +90,18 @@ export default function Home() {
                     Config
                   </button>
                   <button
+                    onClick={() => setIsPlayersOpen(true)}
+                    className="px-3 py-1.5 rounded text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                  >
+                    Players
+                  </button>
+                  <button
+                    onClick={() => setIsCreateOpen(true)}
+                    className="px-3 py-1.5 rounded text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                  >
+                    Create
+                  </button>
+                  <button
                     onClick={() => {}}
                     className="px-3 py-1.5 rounded text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
                   >
@@ -67,22 +114,51 @@ export default function Home() {
             </div>
             
             {/* Main Content Area - Court Layout and Completed Matches Sidebar */}
-            <div className="flex-1 flex overflow-hidden">
-                  {/* Left: Court Layout and Order of Play */}
-                  <div className="flex-1 flex flex-col overflow-hidden" style={{ width: 'calc(100% - 280px)' }}>
-                    {/* Top: Court Layout (5/8 height) */}
-                    <div className="bg-white overflow-auto" style={{ flex: '5' }}>
-                      <CourtGrid isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
-                    </div>
-                    
-                    {/* Bottom: Order of Play (3/8 height) */}
-                    <div className="bg-white overflow-auto" style={{ flex: '3' }}>
-                      <MatchQueue />
-                    </div>
-                  </div>
+            <div ref={mainContentRef} className="flex-1 flex overflow-hidden">
+              {/* Left: Court Layout and Order of Play */}
+              <div ref={leftContentRef} className="flex flex-col overflow-hidden" style={{ width: `calc(100% - ${sidebarWidth}px)` }}>
+                {/* Top: Court Layout */}
+                <div 
+                  className="bg-white overflow-auto" 
+                  style={{ 
+                    height: courtLayoutHeight > 0 ? `${courtLayoutHeight}px` : '62.5%',
+                    minHeight: '200px'
+                  }}
+                >
+                  <CourtGrid isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
+                </div>
+                
+                {/* Resizable divider */}
+                <ResizableDivider
+                  direction="vertical"
+                  onResize={(newHeight) => {
+                    setCourtLayoutHeight(newHeight);
+                  }}
+                  containerRef={leftContentRef as React.RefObject<HTMLElement>}
+                  minSize={200}
+                  maxSize={leftContentRef.current ? leftContentRef.current.clientHeight - 200 : Infinity}
+                />
+                
+                {/* Bottom: Order of Play */}
+                <div 
+                  className="bg-white overflow-auto flex-1" 
+                  style={{ minHeight: '200px' }}
+                >
+                  <MatchQueue />
+                </div>
+              </div>
+              
+              {/* Resizable divider for sidebar */}
+              <ResizableDivider
+                direction="horizontal"
+                onResize={handleSidebarResize}
+                containerRef={mainContentRef as React.RefObject<HTMLElement>}
+                minSize={200}
+                maxSize={mainContentRef.current ? mainContentRef.current.clientWidth - 400 : Infinity}
+              />
               
               {/* Right: Completed Matches List */}
-              <div className="flex-shrink-0" style={{ width: '280px' }}>
+              <div className="flex-shrink-0" style={{ width: `${sidebarWidth}px` }}>
                 <CompletedMatchesList />
               </div>
             </div>
@@ -94,6 +170,12 @@ export default function Home() {
         
         {/* Config Modal */}
         <ConfigModal isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />
+        
+        {/* Players Modal */}
+        <PlayerListModal isOpen={isPlayersOpen} onClose={() => setIsPlayersOpen(false)} />
+        
+        {/* Create Match Modal */}
+        <MatchCreatorModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
       </main>
     </DndProvider>
   );

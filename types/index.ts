@@ -1,6 +1,9 @@
 export type Player = {
   id: string;
   name: string;
+  gender?: 'M' | 'F';
+  events?: EventType[]; // Array of events the player participates in (MS, WS, MD, WD, XD)
+  notes?: string;
 };
 
 export type EventType = 'MS' | 'WS' | 'MD' | 'WD' | 'XD';

@@ -17,14 +17,41 @@ type MatchQueueGridItemProps = {
 };
 
 export function MatchQueueGridItem({ match, conflicts, searchQuery = '' }: MatchQueueGridItemProps) {
-  const { removeMatch, toggleCheckIn, updateMatchDetails } = useApp();
+  const { removeMatch, toggleCheckIn, updateMatchDetails, orderOfPlayCardHeight, matches } = useApp();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // Debug: log when match prop changes
   ReactUseEffect(() => {
     console.log('MatchQueueGridItem - match prop updated:', match.id, 'scheduledTime:', match.scheduledTime);
   }, [match]);
-  const hasConflicts = conflicts.length > 0;
+  
+  // Get conflicting player IDs
+  const getConflictingPlayerIds = () => {
+    const conflictingIds = new Set<string>();
+    const activeMatches = matches.filter((m) => m.status === 'active');
+    
+    const checkPlayer = (playerId: string) => {
+      const isActive = activeMatches.some((m) => 
+        m.player1.id === playerId ||
+        m.player2.id === playerId ||
+        m.player3?.id === playerId ||
+        m.player4?.id === playerId
+      );
+      if (isActive) {
+        conflictingIds.add(playerId);
+      }
+    };
+    
+    checkPlayer(match.player1.id);
+    checkPlayer(match.player2.id);
+    if (match.player3) checkPlayer(match.player3.id);
+    if (match.player4) checkPlayer(match.player4.id);
+    
+    return conflictingIds;
+  };
+  
+  const conflictingPlayerIds = getConflictingPlayerIds();
+  const hasConflicts = conflictingPlayerIds.size > 0;
   const isDoubles = match.player3 && match.player4;
   const checkedIn = match.checkedIn || { player1: false, player2: false };
   const bothCheckedIn = checkedIn.player1 && checkedIn.player2;
@@ -45,8 +72,8 @@ export function MatchQueueGridItem({ match, conflicts, searchQuery = '' }: Match
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      className={`relative p-1 border-2 rounded select-none h-full flex flex-col ${
+      style={{ ...style, minHeight: `${orderOfPlayCardHeight}px`, height: `${orderOfPlayCardHeight}px` }}
+      className={`relative p-1 border-2 rounded select-none flex flex-col ${
         hasConflicts
           ? 'bg-red-100 border-red-500'
           : bothCheckedIn
@@ -120,13 +147,25 @@ export function MatchQueueGridItem({ match, conflicts, searchQuery = '' }: Match
             <p className={`font-semibold text-xs leading-tight break-words ${
               checkedIn.player1 ? 'text-green-700' : ''
             }`}>
-              {highlightTextMultiple(match.player1.name, searchQuery)} / {highlightTextMultiple(match.player3?.name || '', searchQuery)}
+              <span className={conflictingPlayerIds.has(match.player1.id) ? 'text-red-600' : ''}>
+                {highlightTextMultiple(match.player1.name, searchQuery)}
+              </span>
+              {' / '}
+              <span className={match.player3 && conflictingPlayerIds.has(match.player3.id) ? 'text-red-600' : ''}>
+                {highlightTextMultiple(match.player3?.name || '', searchQuery)}
+              </span>
             </p>
             <p className="text-xs text-gray-600 leading-tight">vs</p>
             <p className={`font-semibold text-xs leading-tight break-words ${
               checkedIn.player2 ? 'text-green-700' : ''
             }`}>
-              {highlightTextMultiple(match.player2.name, searchQuery)} / {highlightTextMultiple(match.player4?.name || '', searchQuery)}
+              <span className={conflictingPlayerIds.has(match.player2.id) ? 'text-red-600' : ''}>
+                {highlightTextMultiple(match.player2.name, searchQuery)}
+              </span>
+              {' / '}
+              <span className={match.player4 && conflictingPlayerIds.has(match.player4.id) ? 'text-red-600' : ''}>
+                {highlightTextMultiple(match.player4?.name || '', searchQuery)}
+              </span>
             </p>
           </>
         ) : (
@@ -134,13 +173,17 @@ export function MatchQueueGridItem({ match, conflicts, searchQuery = '' }: Match
             <p className={`font-semibold text-xs leading-tight break-words ${
               checkedIn.player1 ? 'text-green-700' : ''
             }`}>
-              {highlightTextMultiple(match.player1.name, searchQuery)}
+              <span className={conflictingPlayerIds.has(match.player1.id) ? 'text-red-600' : ''}>
+                {highlightTextMultiple(match.player1.name, searchQuery)}
+              </span>
             </p>
             <p className="text-xs text-gray-600 leading-tight">vs</p>
             <p className={`font-semibold text-xs leading-tight break-words ${
               checkedIn.player2 ? 'text-green-700' : ''
             }`}>
-              {highlightTextMultiple(match.player2.name, searchQuery)}
+              <span className={conflictingPlayerIds.has(match.player2.id) ? 'text-red-600' : ''}>
+                {highlightTextMultiple(match.player2.name, searchQuery)}
+              </span>
             </p>
           </>
         )}
@@ -155,15 +198,6 @@ export function MatchQueueGridItem({ match, conflicts, searchQuery = '' }: Match
           )}
           {/* Debug: scheduledTime={match.scheduledTime ? new Date(match.scheduledTime).toISOString() : 'null'} */}
         </div>
-        {hasConflicts && (
-          <div className="mb-1">
-            {conflicts.map((conflict, idx) => (
-              <p key={idx} className="text-xs text-red-700 font-medium leading-tight break-words">
-                ⚠ {conflict}
-              </p>
-            ))}
-          </div>
-        )}
         {bothCheckedIn && !hasConflicts && (
           <p className="text-xs text-green-700 font-medium leading-tight mb-1">Ready</p>
         )}

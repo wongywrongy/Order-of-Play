@@ -6,9 +6,10 @@ import { useApp } from '@/context/AppContext';
 type PlayerListItemProps = {
   player: Player;
   status: 'playing' | 'available';
+  onEdit?: () => void;
 };
 
-export function PlayerListItem({ player, status }: PlayerListItemProps) {
+export function PlayerListItem({ player, status, onEdit }: PlayerListItemProps) {
   const { removePlayer, matches, courts } = useApp();
   
   const getPlayerCourt = () => {
@@ -32,7 +33,7 @@ export function PlayerListItem({ player, status }: PlayerListItemProps) {
       }`}
     >
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex-1">
           <p className="font-medium">{player.name}</p>
           {status === 'playing' && courtName && (
             <p className="text-sm text-green-700 mt-1">Playing on {courtName}</p>
@@ -41,12 +42,28 @@ export function PlayerListItem({ player, status }: PlayerListItemProps) {
             <p className="text-sm text-gray-500 mt-1">Available</p>
           )}
         </div>
-        <button
-          onClick={() => removePlayer(player.id)}
-          className="ml-4 text-red-600 hover:text-red-800 text-sm font-medium"
-        >
-          Remove
-        </button>
+        <div className="flex items-center gap-2">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              title="Edit player"
+            >
+              ✏️
+            </button>
+          )}
+          <button
+            onClick={() => {
+              if (window.confirm(`Are you sure you want to delete ${player.name}?`)) {
+                removePlayer(player.id);
+              }
+            }}
+            className="text-red-600 hover:text-red-800 text-sm font-medium"
+            title="Remove player"
+          >
+            ×
+          </button>
+        </div>
       </div>
     </div>
   );

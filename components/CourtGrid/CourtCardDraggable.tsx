@@ -126,12 +126,12 @@ export function CourtCardDraggable({ court, isEditMode }: CourtCardDraggableProp
           <>
             <div className="flex items-center gap-1 leading-tight">
               <span className="font-semibold" style={{ fontSize: '9px' }}>
-                {m.player1.name} / {m.player3.name}
+                {m.player1.name} / {m.player3?.name || ''}
               </span>
             </div>
             <div className="flex items-center gap-1 leading-tight">
               <span className="font-semibold" style={{ fontSize: '9px' }}>
-                {m.player2.name} / {m.player4.name}
+                {m.player2.name} / {m.player4?.name || ''}
               </span>
             </div>
           </>

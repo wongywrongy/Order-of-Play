@@ -43,10 +43,13 @@ export function importFromTournamentSoftware(
 
     return {
       id: tsMatch.matchId,
+      matchNumber: 1, // Default match number, should be provided in TournamentSoftwareMatch type
+      eventType: 'MS' as const, // Default event type, should be provided in TournamentSoftwareMatch type
       player1,
       player2,
       courtId: tsMatch.court,
       status: tsMatch.status,
+      scheduledTime: tsMatch.scheduledTime ? new Date(tsMatch.scheduledTime) : undefined,
       startTime: tsMatch.scheduledTime ? new Date(tsMatch.scheduledTime) : undefined,
     };
   });

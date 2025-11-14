@@ -45,8 +45,8 @@ export function PastMatches() {
     if (isDoubles) {
       return (
         <div className="text-sm">
-          <div>{match.player1.name} / {match.player3.name}</div>
-          <div className="text-gray-600">{match.player2.name} / {match.player4.name}</div>
+          <div>{match.player1.name} / {match.player3?.name || ''}</div>
+          <div className="text-gray-600">{match.player2.name} / {match.player4?.name || ''}</div>
         </div>
       );
     }

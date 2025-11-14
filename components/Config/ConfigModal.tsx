@@ -9,18 +9,20 @@ type ConfigModalProps = {
 };
 
 export function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
-  const { warmupTimeSeconds, setWarmupTimeSeconds, warmupFlashSeconds, setWarmupFlashSeconds, matchIntervalMinutes, setMatchIntervalMinutes } = useApp();
+  const { warmupTimeSeconds, setWarmupTimeSeconds, warmupFlashSeconds, setWarmupFlashSeconds, matchIntervalMinutes, setMatchIntervalMinutes, orderOfPlayCardHeight, setOrderOfPlayCardHeight } = useApp();
   const [localWarmupTime, setLocalWarmupTime] = useState(warmupTimeSeconds);
   const [localFlashTime, setLocalFlashTime] = useState(warmupFlashSeconds);
   const [localMatchInterval, setLocalMatchInterval] = useState(matchIntervalMinutes);
+  const [localCardHeight, setLocalCardHeight] = useState(orderOfPlayCardHeight);
 
   useEffect(() => {
     if (isOpen) {
       setLocalWarmupTime(warmupTimeSeconds);
       setLocalFlashTime(warmupFlashSeconds);
       setLocalMatchInterval(matchIntervalMinutes);
+      setLocalCardHeight(orderOfPlayCardHeight);
     }
-  }, [isOpen, warmupTimeSeconds, warmupFlashSeconds, matchIntervalMinutes]);
+  }, [isOpen, warmupTimeSeconds, warmupFlashSeconds, matchIntervalMinutes, orderOfPlayCardHeight]);
 
   if (!isOpen) return null;
 
@@ -28,6 +30,7 @@ export function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
     setWarmupTimeSeconds(localWarmupTime);
     setWarmupFlashSeconds(localFlashTime);
     setMatchIntervalMinutes(localMatchInterval);
+    setOrderOfPlayCardHeight(localCardHeight);
     onClose();
   };
 
@@ -100,6 +103,22 @@ export function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
             />
             <p className="text-xs text-gray-500 mt-1">
               Current: {matchIntervalMinutes} minute{matchIntervalMinutes !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Order of Play Card Height (pixels)
+            </label>
+            <input
+              type="number"
+              min="80"
+              max="300"
+              value={localCardHeight}
+              onChange={(e) => setLocalCardHeight(parseInt(e.target.value) || 120)}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Current: {orderOfPlayCardHeight}px
             </p>
           </div>
         </div>
